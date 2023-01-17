@@ -5,7 +5,7 @@ using SellAI.Models.Objects;
 
 namespace SellAI.Models
 {
-  public class User
+  public class Sys_Menu
   {
     [BsonId]
     [BsonRepresentation (BsonType.ObjectId)]
@@ -14,45 +14,20 @@ namespace SellAI.Models
     [BsonElement ("name")]
     public string Nombre { get; set; } = null!;
 
-    [BsonElement ("email")]
-    public string Email { get; set; } = null!;
+    [BsonElement("collection")]
+    public string Collection { get; set; } = null!;
 
-    [BsonElement ("phone")]
-    public string Celular { get; set; } = null!;
+    [BsonElement ("id_intent")]
+    public string IntentID { get; set; } = null!;
 
-    [BsonElement ("password")]
-    public string Password { get; set; } = null!;
+    [BsonElement("entities")]
+    public List<Entity>? Entities { get; set; }
 
-    [BsonElement ("code")]
-    public string? Codigo { get; set; }
+    [BsonElement ("pdf")]
+    public bool? Pdf { get; set; }
 
-    [BsonElement ("user")]
-    public string Usuario { get; set; } = null!;
-
-    [BsonElement ("url")]
-    public UrlDB? Urls { get; set; }
-
-    [BsonElement ("deposit")]
-    public string? Deposito { get; set; }
-
-    [BsonElement ("createdAt")]
-    public DateTime Creado { get; set; }
-
-    [BsonElement ("lastAccess")]
-    public DateTime UltimoAcceso { get; set; }
-
-    [BsonElement ("isActive")]
-    public bool Activo { get; set; }
-
-    [BsonElement ("blocked")]
-    public bool Bloqueado { get; set; }
-
-    [BsonElement ("isLockedOut")]
-    public bool IsLockedOut { get; set; }
-
-    [BsonElement ("token")]
-    [BsonIgnoreIfNull]
-    public string Token { get; set; } = null!;
+    [BsonElement("roles")]
+    public List<Roles>? Roles { get; set; }
 
     [BsonElement ("app")]
     public string App { get; set; } = null!;
