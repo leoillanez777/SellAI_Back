@@ -12,9 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddCors (options => {
-	options.AddPolicy ("CorsApi",
+	options.AddPolicy("CorsApi",
 	   builder => builder.WithOrigins ("http://localhost:8080", "https://localhost:8080")
-	.AllowAnyHeader ().AllowAnyMethod ().AllowCredentials ());
+	.AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 // Add Connection with MongoDB.
@@ -30,6 +30,7 @@ builder.Services.AddSingleton<IPassword, PasswordService>();
 builder.Services.AddTransient<IAuthentication, AuthenticationService>();
 builder.Services.AddTransient<IInterpreter, InterpreterService>();
 builder.Services.AddTransient<IRestApi, RestApiService>();
+builder.Services.AddTransient<IUserMenu, MenuService>();
 #endregion
 
 
@@ -80,6 +81,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseCors("CorsApi");
 
 app.MapControllers();
 

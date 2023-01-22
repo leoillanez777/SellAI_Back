@@ -50,6 +50,9 @@ namespace SellAI.Models
     [BsonElement ("isLockedOut")]
     public bool IsLockedOut { get; set; }
 
+    [BsonElement("roles")]
+    public List<string> Roles { get; set; } = null!;
+
     [BsonElement ("token")]
     [BsonIgnoreIfNull]
     public string Token { get; set; } = null!;

@@ -28,5 +28,12 @@ namespace SellAI.Controllers
       string token = await _db.ValidAsync(loginDTO.User, loginDTO.Password);
       return StatusCode(StatusCodes.Status200OK, new { token });
     }
+
+    [HttpPost("Login")]
+    public async Task<IActionResult> Login(LoginDTO loginDTO)
+    {
+      SignInDTO signIn = await _db.LoginAsync(loginDTO);
+      return StatusCode(StatusCodes.Status200OK, new { signIn });
+    }
   }
 }
