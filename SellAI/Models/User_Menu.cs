@@ -14,9 +14,9 @@ namespace SellAI.Models
     [JsonProperty("_id")]
     public string? Id { get; set; }
 
-    [BsonElement("name")]
-    [JsonProperty("name")]
-    public string Nombre { get; set; } = null!;
+    [BsonElement("label")]
+    [JsonProperty("label")]
+    public string Label { get; set; } = null!;
 
     [BsonElement("d")]
     [JsonProperty("d")]

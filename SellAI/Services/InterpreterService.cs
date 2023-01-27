@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SellAI.Interfaces;
@@ -12,12 +13,14 @@ namespace SellAI.Services
     private readonly IMongoClient _client;
     private readonly IMongoCollection<Sys_Menu> _db;
     private readonly IRestApi _restApi;
+    private readonly IClaim _claim;
 
-    public InterpreterService(IMongoClient client, IOptions<ContextMongoDB> options, IRestApi restApi)
+    public InterpreterService(IMongoClient client, IOptions<ContextMongoDB> options, IRestApi restApi, IClaim claim)
     {
       _client = client;
       _db = _client.GetDatabase(options.Value.DatabaseName).GetCollection<Sys_Menu>(options.Value.SysMenuCollectionName);
       _restApi = restApi;
+      _claim = claim;
     }
 
 
@@ -26,9 +29,9 @@ namespace SellAI.Services
     /// </summary>
     /// <param name="message">texto del usuario</param>
     /// <returns>Respuesta al usuario, con contexto creado.</returns>
-    public async Task<string> SendMessageAsync(string message)
+    public async Task<string> SendMessageAsync(string message, ClaimsIdentity identity, string id = "")
     {
-      // TODO: Guardar en la DB.
+
 
       // Send message and return intents.
       Message response = await _restApi.MessageAsync(message);
@@ -38,13 +41,16 @@ namespace SellAI.Services
       // Traer de sys_menu cuales son los entities que falta.
       // guardar de forma temporal el proceso en base de dato.
       // volver a preguntar por la intención desde la base de datos.
-      foreach (var intent in response.Intents)
-      {
+
+      // Get App & Roles from user.
+      var rolesApp = _claim.GetRoleAndApp(identity);
+      foreach (var intent in response.Intents) {
         var sys_menu = await _db.FindAsync(f => f.Nombre == intent.Name).Result.FirstOrDefaultAsync();
 
-        switch (intent.Name.ToLower())
-        {
-          case "crear_factura":
+        switch (intent.Name.ToLower()) {
+          case "crear_producto":
+            break;
+          case "crear_persona":
             // Debo buscar en la base de datos y que devuelva a que collection grabar.
             // Que datos debo pedir: ejemplo cliente, productos, etc. (buscar entities)
             // establecer conversación para que me devuelva los datos que necesitos.

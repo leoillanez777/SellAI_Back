@@ -31,9 +31,9 @@ namespace SellAI.Services
       _userMenu = userMenu;
       // Devuelve configuracion del token.
       IConfigurationSection secJwt = configuration.GetSection("JWT")!;
-      _secretKey = secJwt.GetSection("Key").ToString()!;
-      _issuer = secJwt.GetSection("Issuer").ToString()!;
-      _audience = secJwt.GetSection("Audience").ToString()!;
+      _secretKey = secJwt.GetSection("Key").Value!.ToString();
+      _issuer = secJwt.GetSection("Issuer").Value!.ToString()!;
+      _audience = secJwt.GetSection("Audience").Value!.ToString()!;
     }
 
     /// <summary>
@@ -58,13 +58,9 @@ namespace SellAI.Services
           new Claim(ClaimTypes.Name, user.Nombre),
           new Claim(ClaimTypes.NameIdentifier, userName),
           new Claim(ClaimTypes.UserData, user.App),
+          new Claim(ClaimTypes.Role, JsonConvert.SerializeObject(user.Roles)),
           new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
-
-        // Add roles as multiple claims
-        foreach (var role in user.Roles) {
-          authClaims.Add(new Claim(ClaimTypes.Role, role));
-        }
 
         var token = new JwtSecurityToken(
             issuer: _issuer,
