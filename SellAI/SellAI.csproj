@@ -45,14 +45,8 @@
     <None Remove="Models\AI\Objects\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Interfaces\" />
-    <Folder Include="Models\" />
-    <Folder Include="Services\" />
     <Folder Include="Mapping\" />
     <Folder Include="Middlewares\" />
-    <Folder Include="Models\DTOs\" />
     <Folder Include="Models\Objects\" />
-    <Folder Include="Models\AI\" />
-    <Folder Include="Models\AI\Objects\" />
   </ItemGroup>
 </Project>

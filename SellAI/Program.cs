@@ -31,6 +31,7 @@ builder.Services.AddTransient<IAuthentication, AuthenticationService>();
 builder.Services.AddTransient<IInterpreter, InterpreterService>();
 builder.Services.AddTransient<IRestApi, RestApiService>();
 builder.Services.AddTransient<IUserMenu, MenuService>();
+builder.Services.AddTransient<ICategory, CategoryService>();
 #endregion
 
 
