@@ -2,7 +2,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
-using SellAI.Middlewares;
 using SellAI.Models.Objects;
 
 namespace SellAI.Models

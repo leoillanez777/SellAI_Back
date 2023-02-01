@@ -8,6 +8,7 @@ namespace SellAI.Models
     public string UserMenuCollectionName { get; set; } = null!;
     public string SysMenuCollectionName { get; set; } = null!;
     public string ProductCollectionName { get; set; } = null!;
+    public string SysContextCollectionName { get; set; } = null!;
   }
 }
 

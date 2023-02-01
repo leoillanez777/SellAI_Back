@@ -32,6 +32,7 @@ builder.Services.AddTransient<IInterpreter, InterpreterService>();
 builder.Services.AddTransient<IRestApi, RestApiService>();
 builder.Services.AddTransient<IUserMenu, MenuService>();
 builder.Services.AddTransient<IClaim, ClaimService>();
+builder.Services.AddTransient<ISysContext, SysContextService>();
 #endregion
 
 
@@ -56,6 +57,7 @@ builder.Services.AddAuthentication(options =>
 		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!))
 	};
 });
+
 builder.Services.AddAuthorization();
 
 // Add AutoMapper

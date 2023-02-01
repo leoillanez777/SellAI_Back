@@ -28,6 +28,24 @@ namespace SellAI.Services
 
       return roleAppDTO;
     }
+
+    public string GetApp(ClaimsIdentity identity)
+    {
+      var app = (from a in identity.Claims
+                 where a.Type == ClaimTypes.UserData
+                 select a.Value).FirstOrDefault();
+
+      return app!;
+    }
+
+    public List<string> GetRoles(ClaimsIdentity identity)
+    {
+      var app = (from a in identity.Claims
+                 where a.Type == ClaimTypes.Role
+                 select a.Value).ToList();
+
+      return app;
+    }
   }
 }
 

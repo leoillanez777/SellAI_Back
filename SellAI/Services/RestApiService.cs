@@ -20,15 +20,22 @@ namespace SellAI.Services
 
     public async Task<Message> MessageAsync(string message)
     {
-      var client = new RestClient($"https://api.wit.ai/message?v=20230113&q={message}");
-      var request = new RestRequest();
-      request.AddHeader("Authorization", _secureKey);
-      var response = await client.GetAsync(request);
       Message msg = new();
-      if (response != null && response.Content != null)
-      {
-        msg = JsonConvert.DeserializeObject<Message>(response.Content)!;
+      try {
+        string v = DateTime.Now.ToString("yyyyMMdd");
+        var client = new RestClient($"https://api.wit.ai/message?v=20230113&q={message}");
+        var request = new RestRequest();
+        request.AddHeader("Authorization", _secureKey);
+        var response = await client.GetAsync(request);
+
+        if (response != null && response.Content != null) {
+          msg = JsonConvert.DeserializeObject<Message>(response.Content)!;
+        }
       }
+      catch (Exception ex) {
+        throw new Exception(ex.Message);
+      }
+
       return msg;
     }
   }
