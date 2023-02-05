@@ -4,18 +4,19 @@ using Microsoft.AspNetCore.Mvc;
 using SellAI.Interfaces;
 using SellAI.Models;
 using SellAI.Models.DTOs;
+using System.Drawing.Drawing2D;
 
 namespace SellAI.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoryController : ControllerBase
+    public class BrandController : ControllerBase
     {
-        private readonly ICategory _db;
-        public CategoryController(ICategory category)
+        private readonly IBrand _db;
+        public BrandController(IBrand brand)
         {
-            _db = category;
+            _db = brand;
         }
 
 
@@ -27,16 +28,16 @@ namespace SellAI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync(CategoryDTO category)
+        public async Task<IActionResult> PostAsync(BrandDTO brand)
         {
-            var data = await _db.PostAsync(category);
+            var data = await _db.PostAsync(brand);
             return StatusCode(StatusCodes.Status200OK, data);
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateAsync(CategoryDTO category, string id)
+        public async Task<IActionResult> UpdateAsync(BrandDTO brand, string id)
         {
-            var data = await _db.UpdateAsync(category, id);
+            var data = await _db.UpdateAsync(brand, id);
             return StatusCode(StatusCodes.Status200OK, data);
         }
     }

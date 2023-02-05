@@ -12,27 +12,27 @@ using System.Text.Json;
 
 namespace SellAI.Services
 {
-    public class CategoryService: ICategory
+    public class BrandService: IBrand
     { 
 
         private readonly IMongoClient _client;
-        private readonly IMongoCollection<Category> _db;
+        private readonly IMongoCollection<Brand> _db;
         private readonly IConfiguration _configuration;
-        private readonly IRestApi _restApi;
+        private readonly IRestApi _resApi;
 
-        public CategoryService(IMongoClient client, IOptions<ContextMongoDB> options, IConfiguration configuration, IRestApi restApi)
+        public BrandService(IMongoClient client, IOptions<ContextMongoDB> options, IConfiguration configuration, IRestApi restApi) 
         {
             _client = client;
             _configuration = configuration;
-            _db = _client.GetDatabase(options.Value.DatabaseName).GetCollection<Category>(options.Value.CategoryCollectionName);
-            _restApi = restApi;
+            _db = _client.GetDatabase(options.Value.DatabaseName).GetCollection<Brand>(options.Value.BrandCollectionName);
+            _resApi= restApi;
         }
 
         /// <summary>
         /// generate a BsonDocument for pipeline
         /// </summary>
         /// <param name="tipo">id filtro</param>
-        /// <param name="atribute">filter category/param>
+        /// <param name="atribute">filter brand/param>
         /// <param name="data">data for search/param>
         /// <returns>return a BsonDocument</returns>
         private BsonDocument match(string tipo, string atribute, object data)
@@ -52,24 +52,24 @@ namespace SellAI.Services
         /// <summary>
         /// Generate the json of a model
         /// </summary>
-        /// <param name="cat">Object Category</param>
+        /// <param name="brand">Object Brand</param>
         /// <returns>Generates the json of a model for the body of the methods post and update</returns>
-        private string jsonKeywords(Category cat)
+        private string jsonKeywords(Brand brand)
         {
             Keywords keys = new Keywords();
-            keys.keyword = cat.name;
+            keys.keyword = brand.name;
             keys.synonyms = new List<string>();
-            keys.synonyms.Add(cat.name);
+            keys.synonyms.Add(brand.name);
             return JsonSerializer.Serialize(keys);
         }
 
         /// <summary>
-        /// Filter the list of Categories from the application and if it considers its status
+        /// Filter the list of Brands from the application and if it considers its status
         /// </summary>
         /// <param name="app">Name of aplication</param>
         /// <param name="isActive">filter active</param>
-        /// <returns>List of Categories accordin the filters</returns>
-        public async Task<List<Category>> GetListAsync(string app, bool isActive)
+        /// <returns>List of Brands accordin the filters</returns>
+        public async Task<List<Brand>> GetListAsync(string app, bool isActive)
         {
             var pipeline = new[] {
                     match("string","app", app)
@@ -86,50 +86,51 @@ namespace SellAI.Services
 
             foreach (var reg in result)
                 reg["_id"] = reg["_id"].AsObjectId.ToString();
-            var response = JsonSerializer.Deserialize<List<Category>>(result.ToJson());
+            var response = JsonSerializer.Deserialize<List<Brand>>(result.ToJson());
             return response!;
         }
 
+
+
         /// <summary>
-        /// add a category in the colection's Category and insert a product_category/keyword
+        /// add a brand in the colection's Brand and insert a product_brand/keyword
         /// </summary>
         /// <returns>Returns a message on the status of the operation  </returns>
-        public async Task<string> PostAsync(CategoryDTO category)
+        public async Task<string> PostAsync(BrandDTO brand)
         {
             var mensaje = "error";
             try
             {
-                #region search category for name and app
+                #region search brand for name and app
                 var config = new MapperConfiguration(cfg =>
-                    cfg.CreateMap<CategoryDTO, Category>()
+                    cfg.CreateMap<BrandDTO, Brand>()
                 );
                 var mapper = new Mapper(config);
-                var cat = mapper.Map<Category>(category);
+                var br = mapper.Map<Brand>(brand);
 
                 var pipeline = new[] {
-                    match("string","name", category.name), match("string","app", category.app)
+                    match("string","name", brand.name), match("string","app", brand.app)
                   };
                 var result = await _db.AggregateAsync<BsonDocument>(pipeline).Result.ToListAsync();
-                #endregion search category for name and app
+                #endregion search brand for name and app
                 if (result.Count == 0)
                 {
-                    #region insert new category
-                    await _db.InsertOneAsync(cat);
-                    #endregion insert new category
+                    #region insert new brand
+                    await _db.InsertOneAsync(br);
+                    #endregion insert new brand
 
-                    #region insert new product_category/keyword
-                    var jsonKeys = jsonKeywords(cat);
-                    mensaje = await _restApi.CallPostCategoryAsync(jsonKeys);
-                    
-                    #endregion insert new product_category/keyword
+                    #region insert new product_brand/keyword
+                    var jsonKeys = jsonKeywords(br);
+                    mensaje = await _resApi.CallPostBrandAsync(jsonKeys);
+                    #endregion insert new product_brand/keyword
 
-                    #region Error in wit.ai, update old category
+                    #region Error in wit.ai, update old brand
                     if (mensaje != "ok")
                     {
-                        var filter = Builders<Category>.Filter.Where(r => r.name == cat.name);
+                        var filter = Builders<Brand>.Filter.Where(r => r.name == br.name);
                         await _db.DeleteOneAsync(filter, new CancellationToken());
                     }
-                    #endregion Error in wit.ai, update old category
+                    #endregion Error in wit.ai, update old brand
 
                 }
                 else if (result.Count == 1)
@@ -147,22 +148,22 @@ namespace SellAI.Services
 
 
         /// <summary>
-        /// update a category in the colection's Category, delete the old category keyword and insert the new category keyword
+        /// update a brand in the colection's Brand, delete the old brand keyword and insert the new brand keyword
         /// </summary>
-        /// <param name="category">Category Object</param>
+        /// <param name="brand">Brand Object</param>
         /// <param name="id">Id Object</param>
         /// <returns>Returns a message on the status of the operation</returns>
-        public async Task<string> UpdateAsync(CategoryDTO category, string id)
+        public async Task<string> UpdateAsync(BrandDTO brand, string id)
         {
             var mensaje = "error";
             try
             {
-                #region search category for id
+                #region search brand for id
                 var config = new MapperConfiguration(cfg =>
-                    cfg.CreateMap<CategoryDTO, Category>()
+                    cfg.CreateMap<BrandDTO, Brand>()
                 );
                 var mapper = new Mapper(config);
-                var cat = mapper.Map<Category>(category);
+                var br = mapper.Map<Brand>(brand);
                 
                 var pipeline = new[] {
                         match("object","_id", id)
@@ -170,41 +171,41 @@ namespace SellAI.Services
                 var result = await _db.AggregateAsync<BsonDocument>(pipeline).Result.ToListAsync();
                 foreach (var reg in result)
                     reg["_id"] = reg["_id"].AsObjectId.ToString();
-                var response = JsonSerializer.Deserialize<List<Category>>(result.ToJson());
+                var response = JsonSerializer.Deserialize<List<Brand>>(result.ToJson());
                 var anterior = response.FirstOrDefault();
-                #endregion search category for id
+                #endregion search brand for id
 
                 if (result.Count == 1)
                 {
-                    #region Update Category
-                    var filter = Builders<Category>.Filter.Where(r => r.Id == id);
-                    var update = Builders<Category>.Update
-                        .Set(p => p.name, cat.name)
-                        .Set(p => p.description, cat.description)
-                        .Set(p => p.isActive, cat.isActive);
+                    #region Update Brand
+                    var filter = Builders<Brand>.Filter.Where(r => r.Id == id);
+                    var update = Builders<Brand>.Update
+                        .Set(p => p.name, br.name)
+                        .Set(p => p.description, br.description)
+                        .Set(p => p.isActive, br.isActive);
                     await _db.UpdateOneAsync(filter, update);
-                    #endregion Update Category
+                    #endregion Update Brand
 
-                    #region Delete old product_category/keyword
-                    mensaje = await _restApi.CallDeleteCategoryAsync(anterior.name);
-                    #endregion Delete old product_category/keyword
+                    #region Delete old product_brand/keyword
+                    mensaje = await _resApi.CallDeleteBrandAsync(anterior.name);
+                    #endregion Delete old product_brand/keyword
 
-                    #region Insert new product_category/keyword
-                    string jsonKeys = jsonKeywords(cat);
-                    mensaje = await _restApi.CallPostCategoryAsync(jsonKeys);
-                    #endregion Insert new product_category/keyword
+                    #region Insert new product_brand/keyword
+                    string jsonKeys = jsonKeywords(br);
+                    mensaje = await _resApi.CallPostBrandAsync(jsonKeys);
+                    #endregion Insert new product_brand/keyword
 
-                    #region Error in wit.ai, update old category
+                    #region Error in wit.ai, update old brand
                     if (mensaje != "ok")
                     {
-                        update = Builders<Category>.Update
+                        update = Builders<Brand>.Update
                        .Set(p => p.app, anterior.app)
                        .Set(p => p.name, anterior.name)
                        .Set(p => p.description, anterior.description)
                        .Set(p => p.isActive, anterior.isActive);
                         await _db.UpdateOneAsync(filter, update);
                     }
-                    #endregion Error in wit.ai, update old category
+                    #endregion Error in wit.ai, update old brand
 
                 }
                 else
