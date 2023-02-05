@@ -33,6 +33,7 @@ builder.Services.AddTransient<IRestApi, RestApiService>();
 builder.Services.AddTransient<IUserMenu, MenuService>();
 builder.Services.AddTransient<IClaim, ClaimService>();
 builder.Services.AddTransient<ISysContext, SysContextService>();
+builder.Services.AddTransient<ICategory, CategoryService>();
 #endregion
 
 
