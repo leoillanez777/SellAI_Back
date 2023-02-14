@@ -46,17 +46,12 @@ namespace SellAI.Services
       Message response = await _restApi.MessageAsync(message);
 
       MessageDTO messagesDTO = new();
-      messagesDTO.msgDTOs = new();
-      messagesDTO.contexts = new();
-
+      messagesDTO.messages = new();
       // UNDONE: Allow greeting and action too.
 
       if (IsGreeting(response)) {
         var sysMessage = await _db.FindAsync(f => f.Nombre == "saludos" || f.IntentID == "1275683856349570").Result.FirstOrDefaultAsync();
-        MsgDTO msgDTO = new();
-        msgDTO.MessageID = sysMessage.IntentID;
-        msgDTO.Content = sysMessage.Mensaje!;
-        messagesDTO.msgDTOs.Add(msgDTO);
+        messagesDTO.messages.Add(sysMessage.Mensaje!);
       }
       else {
         messagesDTO = await LoopIntentAndEntityAsync(response, roleApp.App);
@@ -68,24 +63,19 @@ namespace SellAI.Services
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="message"></param>
-    /// <param name="token"></param>
+    /// <param name="message">Response message</param>
+    /// <param name="token">Id in collection of sys_context</param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
     public async Task<string> SendResponseAsync(string message, string token, string appName)
     {
-      // TODO: How to detect if the context is the same as the last?.
-
-
-
       // Get context from DB. Delete it?
       Sys_Context context = await _context.GetContextAsync(token);
       string newMessage = "";
 
-      if (context.Intents.Intents.Count > 0) {
+      if (!String.IsNullOrEmpty(context.IntentName)) {
         // add newMessage with intent.
-        foreach (var intent in context.Intents.Intents)
-          newMessage += intent.Name.Replace("_", " ") + " ";
+        newMessage += context.IntentName.Replace("_", " ") + " ";
       }
 
       // Send message with all entities
@@ -102,30 +92,35 @@ namespace SellAI.Services
       Message response = await _restApi.MessageAsync(newMessage);
 
       MessageDTO messagesDTO = new();
-      messagesDTO.msgDTOs = new();
-      messagesDTO.contexts = new();
-      messagesDTO = await LoopIntentAndEntityAsync(response, appName);
+      messagesDTO.messages = new();
+      messagesDTO = await LoopIntentAndEntityAsync(response, appName, context.IntentID);
 
       return JsonConvert.SerializeObject(messagesDTO);
     }
+
+
+    #region Private Functions
 
     /// <summary>
     /// Convert response from API to DTO
     /// </summary>
     /// <param name="response">Response of API</param>
     /// <param name="app">Name app for filter</param>
+    /// <param name="previousIntentID">for compare if same intent</param>
     /// <returns>Return DTO with missing entities or messages</returns>
-    private async Task<MessageDTO> LoopIntentAndEntityAsync(Message response, string app)
+    private async Task<MessageDTO> LoopIntentAndEntityAsync(Message response, string app, string previousIntentID = "")
     {
       // convert entities from response to entity.
       List<Entity> listEntity = ConvertToEntity(response);
 
       MessageDTO messageDTO = new();
-      messageDTO.msgDTOs = new();
-      messageDTO.contexts = new();
+      messageDTO.messages = new();
 
       // loop from intents
-      foreach (var intent in response.Intents) {
+      if (response.Intents.Count > 0) {
+        // TODO: I must consider the percentage of the intent.
+        // TODO: In case the intention is very low in percentage, give an answer that the question is not understood.
+        var intent = response.Intents[0];
         var sys_menu = await _db.FindAsync(f => f.Nombre == intent.Name && f.App == app).Result.FirstOrDefaultAsync();
         if (sys_menu != null) {
 
@@ -133,37 +128,51 @@ namespace SellAI.Services
           Sys_Context context = new();
           context.App = app;
           context.Collection = sys_menu.Collection;
+          context.IntentID = intent.Id;
+          context.IntentName = intent.Name;
           context.Intents = response;
           context = await _context.CreateContextAsync(context);
 
           // Add Id to response
           Sys_ContextDTO sys_ContextDTO = new();
           sys_ContextDTO.Id = context.Id!;
-          sys_ContextDTO.Collection = context.Collection;
           sys_ContextDTO.Text = context.Intents.Text;
-          messageDTO.contexts.Add(sys_ContextDTO);
+          sys_ContextDTO.Created = false;
+          messageDTO.contexts = sys_ContextDTO;
 
-          // If have entity 
+          // Only save if have entities. 
           if (sys_menu.Entities != null && sys_menu.Entities.Count > 0) {
             // Find the ones that don't match
             var exceptEntities = sys_menu.Entities
                   .Select(e => e.EntityID)
                   .Except(listEntity
                     .Select(l => l.EntityID)).ToList();
+            bool allFieldsComplete = true;
             if (exceptEntities.Count > 0) {
               // Missing entities to complete
               var missEntity = sys_menu.Entities.Where(e => exceptEntities.Any(a => a == e.EntityID)).ToList();
               missEntity.ForEach(m => {
                 if (m.Required.HasValue) {
-                  MsgDTO msgDTO = new();
-                  msgDTO.MessageID = m.EntityID;
-                  msgDTO.Content = m.Message;
-                  messageDTO.msgDTOs.Add(msgDTO);
+                  messageDTO.messages.Add(m.Message!);
+                  allFieldsComplete = false;
                 }
               });
             }
+            if (allFieldsComplete) {
+              // Save data and indicate in response that this was created.
+              // Get default values too.
+              // Use ManagementSave...
+              // HACK: I can use one collection for all datas and search for intent and entities
+              messageDTO.messages.Add("... fue creado correctamente!");
+            }
           }
         }
+      }
+      else {
+        // TODO: Get response from DB.
+        messageDTO.messages.Add("No entiendo tu pregunta...soy una inteligencia artificial entrenada para comandos de sistema de gestión." +
+          "\n Si necesitas ayuda, por favor lee la documentación o escribre \"Ayuda\"." +
+          "\nGracias por tu paciencia");
       }
       return messageDTO;
     }
@@ -203,6 +212,8 @@ namespace SellAI.Services
               select a).FirstOrDefault() != null;
       ;
     }
+
+    #endregion
   }
 }
 

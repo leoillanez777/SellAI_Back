@@ -13,6 +13,8 @@ namespace SellAI.Mapping
       CreateMap<Entity, Entities>()
         .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.EntityID))
         .ReverseMap();
+      CreateMap<Category, CategoryDTO>()
+        .ReverseMap();
     }
   }
 }

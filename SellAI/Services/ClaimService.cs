@@ -12,6 +12,11 @@ namespace SellAI.Services
     {
     }
 
+    /// <summary>
+    /// Get only role and app from claims.
+    /// </summary>
+    /// <param name="identity"></param>
+    /// <returns></returns>
     public RoleAppDTO GetRoleAndApp(ClaimsIdentity identity)
     {
       RoleAppDTO roleAppDTO = new RoleAppDTO();

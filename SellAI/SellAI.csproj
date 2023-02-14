@@ -43,10 +43,12 @@
     <None Remove="RestSharp" />
     <None Remove="Models\AI\" />
     <None Remove="Models\AI\Objects\" />
+    <None Remove="Models\Data\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Mapping\" />
     <Folder Include="Middlewares\" />
     <Folder Include="Models\Objects\" />
+    <Folder Include="Models\Data\" />
   </ItemGroup>
 </Project>

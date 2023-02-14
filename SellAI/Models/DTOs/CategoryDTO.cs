@@ -2,13 +2,11 @@
 using MongoDB.Bson;
 using Newtonsoft.Json;
 
-namespace SellAI.Models.DTOs
-{
-    public class CategoryDTO
-    {
-        public string name { get; set; } = null!;
-        public string description { get; set; } = null!;
-        public bool isActive { get; set; } = false;
-        public string app { get; set; } = "";
-    }
+namespace SellAI.Models.DTOs {
+  public class CategoryDTO {
+    public string Nombre { get; set; } = null!;
+    public string Descripcion { get; set; } = null!;
+    public List<string> Sinonimos { get; set; } = null!;
+    public bool Activo { get; set; } = false;
+  }
 }
