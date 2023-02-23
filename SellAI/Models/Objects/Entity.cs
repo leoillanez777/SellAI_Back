@@ -2,14 +2,8 @@
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
-namespace SellAI.Models.Objects
-{
-  public class Entity
-  {
-    [BsonElement("entityID")]
-    [JsonProperty("entityID")]
-    public string EntityID { get; set; } = null!;
-
+namespace SellAI.Models.Objects {
+  public class Entity {
     [BsonElement("name")]
     [JsonProperty("name")]
     public string Name { get; set; } = null!;
@@ -17,6 +11,14 @@ namespace SellAI.Models.Objects
     [BsonElement("alias")]
     [JsonProperty("alias")]
     public string Alias { get; set; } = null!;
+
+    [BsonElement("rolId")]
+    [JsonProperty("rolId")]
+    public string? RolID { get; set; }
+
+    [BsonElement("roles")]
+    [JsonProperty("roles")]
+    public List<EntityRol>? Roles { get; set; }
 
     [BsonElement("required")]
     [JsonProperty("required")]

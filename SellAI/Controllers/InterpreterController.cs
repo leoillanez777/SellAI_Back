@@ -30,12 +30,8 @@ namespace SellAI.Controllers
     public async Task<IActionResult> SendMessage(string message)
     {
       string jsonResponse = "";
-      var identity = HttpContext.User.Identity as ClaimsIdentity;
-      if (identity != null) {
-
-        // Get App & Roles from user.
-        RoleAppDTO rolesApp = _claim.GetRoleAndApp(identity);
-
+      RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+      if (rolesApp != null) {
         // Call Service
         jsonResponse = await _db.SendMessageAsync(message, rolesApp);
         return StatusCode(StatusCodes.Status200OK, new { resp = jsonResponse });
@@ -47,14 +43,10 @@ namespace SellAI.Controllers
     public async Task<IActionResult> SendMessage(string message, string token)
     {
       string jsonResponse = "";
-      var identity = HttpContext.User.Identity as ClaimsIdentity;
-      if (identity != null) {
-
-        // Get App & Roles from user.
-        RoleAppDTO rolesApp = _claim.GetRoleAndApp(identity);
-
+      RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+      if (rolesApp != null) {
         // Call Service
-        jsonResponse = await _db.SendResponseAsync(message, token, rolesApp.App);
+        jsonResponse = await _db.SendResponseAsync(message, token, rolesApp);
         return StatusCode(StatusCodes.Status200OK, new { resp = jsonResponse });
       }
       return StatusCode(StatusCodes.Status401Unauthorized);

@@ -25,43 +25,43 @@ namespace SellAI.Controllers {
     [HttpGet]
     public async Task<IActionResult> GetListAsync(bool isActive = true)
     {
-      var identity = HttpContext.User.Identity as ClaimsIdentity;
-      if (identity != null) {
-        // Get App & Roles from user.
-        RoleAppDTO rolesApp = _claim.GetRoleAndApp(identity);
-
-        var data = await _db.GetListAsync(rolesApp.App, isActive);
+      RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+      if (rolesApp != null) {
+        var data = await _db.GetListAsync(rolesApp, isActive);
         return StatusCode(StatusCodes.Status200OK, data);
       }
+
       return StatusCode(StatusCodes.Status401Unauthorized);
     }
 
     [HttpPost]
     public async Task<IActionResult> PostAsync(BrandDTO brand)
     {
-      var identity = HttpContext.User.Identity as ClaimsIdentity;
-      if (identity != null) {
-        // Get App & Roles from user.
-        RoleAppDTO rolesApp = _claim.GetRoleAndApp(identity);
-
-        var data = await _db.PostAsync(brand, rolesApp.App);
+      RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+      if (rolesApp != null) {
+        var data = await _db.PostAsync(brand, rolesApp);
+        if (data == "error")
+          return StatusCode(StatusCodes.Status500InternalServerError, data);
         return StatusCode(StatusCodes.Status201Created, data);
       }
+
       return StatusCode(StatusCodes.Status401Unauthorized);
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateAsync(BrandDTO brand, string id)
+    public async Task<IActionResult> UpdateAsync(BrandDTO brand)
     {
-      var identity = HttpContext.User.Identity as ClaimsIdentity;
-      if (identity != null) {
-        // Get App & Roles from user.
-        RoleAppDTO rolesApp = _claim.GetRoleAndApp(identity);
-
-        var data = await _db.UpdateAsync(brand, id, rolesApp.App);
+      RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+      if (rolesApp != null) {
+        var data = await _db.UpdateAsync(brand, rolesApp);
+        if (data == "error")
+          return StatusCode(StatusCodes.Status500InternalServerError, data);
         return StatusCode(StatusCodes.Status202Accepted, data);
       }
+
       return StatusCode(StatusCodes.Status401Unauthorized);
     }
+
+    //TODO: add delete request.
   }
 }

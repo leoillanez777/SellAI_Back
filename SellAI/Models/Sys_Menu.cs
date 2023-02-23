@@ -21,6 +21,14 @@ namespace SellAI.Models
     [JsonProperty("name")]
     public string Nombre { get; set; } = null!;
 
+    [BsonElement("display")]
+    [JsonProperty("display")]
+    public string Display { get; set; } = null!;
+
+    [BsonElement("action")]
+    [JsonProperty("action")]
+    public string Accion { get; set; } = null!;
+
     [BsonElement("collection")]
     [JsonProperty("collection")]
     public string Collection { get; set; } = null!;

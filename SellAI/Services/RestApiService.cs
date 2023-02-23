@@ -91,6 +91,8 @@ namespace SellAI.Services
     }
     #endregion
 
+    #region Call Delete Entity
+
     public async Task<string> CallDeleteEntityAsync(string entity, string keyword, string synonym)
     {
       string url = $"{_urlEntity}/{entity}/keywords/{keyword}/synonyms/{synonym}?v={_version}";
@@ -107,6 +109,8 @@ namespace SellAI.Services
       return await PostOrDeleteAsync(url);
     }
 
+    #endregion
+
     #region Private Functions
 
     private async Task<string> PostOrDeleteAsync(string url, string body = "")
@@ -118,8 +122,20 @@ namespace SellAI.Services
           response = await CallPostOrDeleteAsync(url);
         else
           response = await CallPostOrDeleteAsync(url, body);
-        if (response != null && response.Content != null && response.IsSuccessful)
-          msg = response.Content;
+        if (response != null && response.Content != null && response.IsSuccessful) {
+          if (response.ContentType == "application/json" && response.StatusCode == System.Net.HttpStatusCode.BadRequest) {
+            ResponseError responseError = JsonConvert.DeserializeObject<ResponseError>(response.Content)!;
+            if (responseError.error.Contains("already exists")) {
+              msg = "already exists";// duplicated, perhaps because another created.
+              // UNDONE: create synonyms? I don't know.
+            }
+            else {
+              msg = responseError.error;
+            }
+          }
+          else
+            msg = response.Content;
+        }
       }
       catch (Exception ex) {
         throw new Exception(ex.Message);

@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddCors (options => {
 	options.AddPolicy("CorsApi",
-	   builder => builder.WithOrigins ("http://localhost:8080", "https://localhost:8080")
+	   builder => builder.WithOrigins ("http://localhost:8080", "https://localhost:8080", "http://192.168.1.4:8080")
 	.AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
@@ -23,20 +23,26 @@ builder.Services.AddSingleton<IMongoClient, MongoClient> (sp => new MongoClient(
 // Add DB Options Middleware
 builder.Services.Configure<ContextMongoDB>(builder.Configuration.GetSection("MongoDBGestion"));
 
-// Add Password Middleware
-builder.Services.AddSingleton<IPassword, PasswordService>();
+// Add Middleware
+builder.Services.AddScoped<IPassword, PasswordService>();
+builder.Services.AddScoped<IClaim, ClaimService>();
+
+#region Add connection with DB but without controllers
+builder.Services.AddTransient<IAnalyzeContext, AnalyzeContextService>();
+builder.Services.AddTransient<IData, DataService>();
+builder.Services.AddTransient<IRestApi, RestApiService>();
+builder.Services.AddTransient<ISysLog, LogService>();
+builder.Services.AddTransient<ISysContext, SysContextService>();
+builder.Services.AddTransient<ISysMenu, SysMenuService>();
+builder.Services.AddTransient<IUserMenu, MenuService>();
+#endregion
 
 #region Controllers Interface
 builder.Services.AddTransient<IAuthentication, AuthenticationService>();
-builder.Services.AddTransient<IInterpreter, InterpreterService>();
-builder.Services.AddTransient<IRestApi, RestApiService>();
-builder.Services.AddTransient<IUserMenu, MenuService>();
-builder.Services.AddTransient<IClaim, ClaimService>();
-builder.Services.AddTransient<ISysContext, SysContextService>();
-builder.Services.AddTransient<ICategory, CategoryService>();
 builder.Services.AddTransient<IBrand, BrandService>();
+builder.Services.AddTransient<ICategory, CategoryService>();
+builder.Services.AddTransient<IInterpreter, InterpreterService>();
 #endregion
-
 
 // Add Authentication
 builder.Services.AddAuthentication(options =>

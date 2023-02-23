@@ -17,10 +17,6 @@ namespace SellAI.Models
     [JsonProperty("label")]
     public string Label { get; set; } = null!;
 
-    [BsonElement("d")]
-    [JsonProperty("d")]
-    public string? Icono_D { get; set; }
-
     [BsonElement("icon")]
     [JsonProperty("icon")]
     public string? Icono { get; set; }

@@ -11,9 +11,12 @@ namespace SellAI.Mapping
     public DomainToResponseMappingProfile()
     {
       CreateMap<Entity, Entities>()
-        .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.EntityID))
+        .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.RolID))
+        .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Rol))
         .ReverseMap();
       CreateMap<Category, CategoryDTO>()
+        .ReverseMap();
+      CreateMap<Brand, BrandDTO>()
         .ReverseMap();
     }
   }

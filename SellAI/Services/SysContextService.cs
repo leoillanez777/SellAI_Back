@@ -30,14 +30,15 @@ namespace SellAI.Services
       return sys_Context;
     }
 
-    public void UpdateContext()
+    public async Task<Sys_Context> UpdateContextAsync(Sys_Context sys_Context)
     {
-
-    }
-
-    public void DeleteContext()
-    {
-
+      try {
+        await _db.ReplaceOneAsync(s => s.Id == sys_Context.Id, sys_Context);
+        return sys_Context;
+      }
+      catch (Exception ex) {
+        throw new Exception(ex.Message);
+      }
     }
   }
 }

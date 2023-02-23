@@ -13,17 +13,13 @@ namespace SellAI.Models
     [JsonProperty("id")]
     public string? Id { get; set; }
 
-    [BsonElement("intentId")]
-    [JsonProperty("intentId")]
-    public string IntentID { get; set; } = null!;
+    [BsonElement("display")]
+    [JsonProperty("display")]
+    public string Display { get; set; } = null!;
 
-    [BsonElement("intentName")]
-    [JsonProperty("intentName")]
-    public string IntentName { get; set; } = null!;
-
-    [BsonElement("collection")]
-    [JsonProperty("collection")]
-    public string Collection { get; set; } = null!;
+    [BsonElement("action")]
+    [JsonProperty("action")]
+    public string Accion { get; set; } = null!;
 
     [BsonElement("intents")]
     [JsonProperty("intents")]

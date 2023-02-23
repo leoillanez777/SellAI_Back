@@ -1,7 +1,9 @@
-﻿using AutoMapper;
+﻿using System.Drawing.Drawing2D;
+using AutoMapper;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 using NuGet.Protocol;
 using RestSharp;
 using SellAI.Interfaces;
@@ -9,7 +11,6 @@ using SellAI.Models;
 using SellAI.Models.AI.Objects;
 using SellAI.Models.DTOs;
 using SellAI.Models.Objects;
-using System.Text.Json;
 
 namespace SellAI.Services
 {
@@ -17,62 +18,64 @@ namespace SellAI.Services
 
     private readonly IMongoClient _client;
     private readonly IMongoCollection<Category> _db;
-    private readonly IConfiguration _configuration;
     private readonly IRestApi _restApi;
+    private readonly ISysLog _syslog;
     private readonly IMapper _mapper;
     private readonly string _entityName = "product_category";
+    private readonly string _nameCol;
 
     public CategoryService(IMongoClient client,
       IOptions<ContextMongoDB> options,
-      IConfiguration configuration,
       IRestApi restApi,
+      ISysLog sysLog,
       IMapper map)
     {
+      _nameCol = options.Value.CategoryCollectionName;
       _client = client;
-      _configuration = configuration;
-      _db = _client.GetDatabase(options.Value.DatabaseName).GetCollection<Category>(options.Value.CategoryCollectionName);
+      _db = _client.GetDatabase(options.Value.DatabaseName).GetCollection<Category>(_nameCol);
       _restApi = restApi;
+      _syslog = sysLog;
       _mapper = map;
     }
 
-    /// <summary>
-    /// Filter the list of Categories from the application and if it considers its status
-    /// </summary>
-    /// <param name="app">Name of aplication</param>
-    /// <param name="isActive">filter active</param>
-    /// <returns>List of Categories accordin the filters</returns>
-    public async Task<List<Category>> GetListAsync(string app, bool isActive)
+    public async Task<List<CategoryDTO>> GetListAsync(RoleAppDTO roleAppDTO, bool isActive)
     {
-      var response = await _db.FindAsync(c => c.App == app && c.Activo == isActive).Result.ToListAsync();
-      return response;
+      var response = await _db.FindAsync(c => c.App == roleAppDTO.App && c.Activo == isActive).Result.ToListAsync();
+      List<CategoryDTO> categories = new();
+      response.ForEach(cat => {
+        CategoryDTO category = _mapper.Map<CategoryDTO>(cat);
+        categories.Add(category);
+      });
+      return categories;
     }
 
-    /// <summary>
-    /// add a category in the collection's Category and insert a product_category/keyword
-    /// </summary>
-    /// <returns>Returns a message on the status of the operation  </returns>
-    public async Task<string> PostAsync(CategoryDTO category, string app)
+    public async Task<string> PostAsync(CategoryDTO categoryDTO, RoleAppDTO roleAppDTO)
     {
-      // tengo que agregar datos de categoria.
-      // tambien agregar si tiene sinonimos.
-      // UNDONE: probar crear entity existentes.
       var mensaje = "error";
       try {
-        var result = await _db.FindAsync(c => c.Nombre.ToLower().Contains(category.Nombre.ToLower()) && c.App == app).Result.ToListAsync();
+        var result = await _db.FindAsync(c => c.Nombre.ToLower().Contains(categoryDTO.Nombre.ToLower()) && c.App == roleAppDTO.App).Result.ToListAsync();
         if (result.Count == 0) {
           Category cat = new();
-          cat = _mapper.Map<Category>(category);
-          cat.App = app;
+          cat = _mapper.Map<Category>(categoryDTO);
+          cat.App = roleAppDTO.App;
           using (var session = await _client.StartSessionAsync()) {
             try {
-
+              session.StartTransaction();
               await _db.InsertOneAsync(cat);
+
+              await _syslog.CreateAsync(cat, _nameCol, roleAppDTO);
+
               var jsonKeys = jsonKeywords(cat);
 
               mensaje = await _restApi.CallPostEntityAsync(jsonKeys, _entityName);
 
-              if (mensaje != "error")
+              if (mensaje != "error" || mensaje == "already exists") {
+                // FIXME: To add remaining keywords if mensaje is "already exists".
                 await session.CommitTransactionAsync();
+
+                categoryDTO.Id = cat.Id!;
+                mensaje = JsonConvert.SerializeObject(categoryDTO);
+              }
               else
                 await session.AbortTransactionAsync();
             }
@@ -94,26 +97,23 @@ namespace SellAI.Services
       return mensaje;
     }
 
-    /// <summary>
-    /// update a category in the colection's Category, delete the old category keyword and insert the new category keyword
-    /// </summary>
-    /// <param name="category">Category Object</param>
-    /// <param name="id">Id Object</param>
-    /// <returns>Returns a message on the status of the operation</returns>
-    public async Task<string> UpdateAsync(CategoryDTO category, string id, string app)
+    public async Task<string> UpdateAsync(CategoryDTO categoryDTO, RoleAppDTO roleAppDTO)
     {
       var mensaje = "error";
 
       using (var session = await _client.StartSessionAsync()) {
         try {
           Category cat = new();
-          cat = _mapper.Map<Category>(category);
-          cat.App = app;
+          cat = _mapper.Map<Category>(categoryDTO);
+          cat.App = roleAppDTO.App;
 
-          await _db.ReplaceOneAsync(c => c.Id == id && c.App == app, cat);
+          session.StartTransaction();
+          await _db.ReplaceOneAsync(c => c.Id == categoryDTO.Id && c.App == roleAppDTO.App, cat);
+
+          await _syslog.UpdateAsync(cat, _nameCol, roleAppDTO);
 
           #region Delete old product_category/keyword
-          mensaje = await _restApi.CallDeleteEntityAsync(_entityName, category.Nombre);
+          mensaje = await _restApi.CallDeleteEntityAsync(_entityName, categoryDTO.Nombre);
           #endregion Delete old product_category/keyword
 
           #region Insert new product_category/keyword
@@ -121,10 +121,15 @@ namespace SellAI.Services
           mensaje = await _restApi.CallPostEntityAsync(jsonKeys, _entityName);
           #endregion Insert new product_category/keyword
 
-          if (mensaje != "error")
+          if (mensaje != "error") {
             await session.CommitTransactionAsync();
+
+            categoryDTO.Id = cat.Id!;
+            mensaje = JsonConvert.SerializeObject(categoryDTO);
+          }
           else
             await session.AbortTransactionAsync();
+
         }
         catch (Exception ex) {
           await session.AbortTransactionAsync();
@@ -132,6 +137,13 @@ namespace SellAI.Services
         }
       }
       return mensaje;
+    }
+
+    public Task<string> DeleteAsync(string id, RoleAppDTO roleAppDTO)
+    {
+      // Delete on DB, but verify if in wit.ai.
+      // Create Log.
+      throw new NotImplementedException();
     }
 
     /// <summary>
@@ -146,7 +158,7 @@ namespace SellAI.Services
       keys.synonyms = cat.Sinonimos;
       if (cat.Sinonimos.Count == 0)
         keys.synonyms.Add(cat.Nombre);
-      return JsonSerializer.Serialize(keys);
+      return System.Text.Json.JsonSerializer.Serialize(keys);
     }
   }
 }

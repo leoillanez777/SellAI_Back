@@ -56,7 +56,8 @@ namespace SellAI.Services
         var authClaims = new List<Claim>
         {
           new Claim(ClaimTypes.Name, user.Nombre),
-          new Claim(ClaimTypes.NameIdentifier, userName),
+          new Claim(ClaimTypes.NameIdentifier, user.Usuario.ToLower()),
+          new Claim(ClaimTypes.Email, user.Email.ToLower()),
           new Claim(ClaimTypes.UserData, user.App),
           new Claim(ClaimTypes.Role, JsonConvert.SerializeObject(user.Roles)),
           new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
