@@ -61,7 +61,7 @@ namespace SellAI.Services
     public async Task<string> SendResponseAsync(string message, string token, RoleAppDTO roleApp)
     {
       string newMessage = "", intentID = "", contextID = "";
-      // TODO: I must take into account the action
+      // UNDONE: I must take into account the action
       Sys_Context context = await _context.GetContextAsync(token);
       if (context != null) {
         contextID = context.Id!;

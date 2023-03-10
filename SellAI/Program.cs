@@ -26,6 +26,7 @@ builder.Services.Configure<ContextMongoDB>(builder.Configuration.GetSection("Mon
 // Add Middleware
 builder.Services.AddScoped<IPassword, PasswordService>();
 builder.Services.AddScoped<IClaim, ClaimService>();
+builder.Services.AddScoped<IAnalyzeAction, AnalyzeActionService>();
 
 #region Add connection with DB but without controllers
 builder.Services.AddTransient<IAnalyzeContext, AnalyzeContextService>();

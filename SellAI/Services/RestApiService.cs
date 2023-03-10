@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Net;
 using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Crmf;
 using RestSharp;
+using RestSharp.Authenticators;
+using RestSharp.Authenticators.OAuth2;
 using SellAI.Interfaces;
 using SellAI.Models.AI;
 using SellAI.Models.AI.Objects;
@@ -32,22 +35,36 @@ namespace SellAI.Services
     /// </summary>
     /// <param name="message">text to send</param>
     /// <returns>Model Message</returns>
-    /// <exception cref="Exception"></exception>
     public async Task<Message> MessageAsync(string message)
     {
       Message msg = new();
       try {
-        var client = new RestClient($"{_urlMsg}?v={_version}&q={message}");
+        var options = new RestClientOptions($"{_urlMsg}?v={_version}&q={message}") {
+          ThrowOnAnyError = true,
+          MaxTimeout = 10000
+        };
+        var client = new RestClient(options) {
+         Authenticator = new JwtAuthenticator(_secureKey)
+        };
         var request = new RestRequest();
-        request.AddHeader("Authorization", _secureKey);
+        //request.AddHeader("Authorization", _secureKey);
         var response = await client.GetAsync(request);
 
         if (response != null && response.Content != null) {
-          msg = JsonConvert.DeserializeObject<Message>(response.Content)!;
+          if (response.StatusCode == HttpStatusCode.OK) {
+            msg = JsonConvert.DeserializeObject<Message>(response.Content)!;
+          }
+          else {
+            var errorMessage = response.ErrorException != null ? response.ErrorException.Message : response.ErrorMessage;
+            throw new Exception($"Se produjo un error al llamar a la API de mensajes. Código de estado HTTP: {(int)response.StatusCode}. Detalles: {errorMessage}");
+          }
         }
       }
+      catch (JsonException ex) {
+        throw new Exception($"Se produjo un error al deserializar la respuesta de la API de mensajes: {ex.Message}. Detalles: {ex.StackTrace}");
+      }
       catch (Exception ex) {
-        throw new Exception(ex.Message);
+        throw new Exception($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
       }
 
       return msg;
@@ -138,21 +155,31 @@ namespace SellAI.Services
         }
       }
       catch (Exception ex) {
-        throw new Exception(ex.Message);
+        throw new Exception($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
       }
       return msg;
     }
 
     private async Task<RestResponse> CallPostOrDeleteAsync(string url, string body = "")
     {
-      var client = new RestClient(url);
-      var request = new RestRequest();
-      request.Method = body == "" ? RestSharp.Method.Delete : RestSharp.Method.Post;
-      request.AddHeader("Authorization", _secureKey);
-      request.AddHeader("Content-Type", "application/json");
-      if (body != "")
-        request.AddParameter("application/json", body, ParameterType.RequestBody);
-      return await client.ExecuteAsync(request);
+      try {
+        var options = new RestClientOptions(url) {
+          ThrowOnAnyError = true,
+          MaxTimeout = 10000
+        };
+        var client = new RestClient(options) {
+          Authenticator = new JwtAuthenticator(_secureKey)
+        };
+        var request = new RestRequest();
+        request.Method = body == "" ? RestSharp.Method.Delete : RestSharp.Method.Post;
+        request.AddHeader("Content-Type", "application/json");
+        if (body != "")
+          request.AddParameter("application/json", body, ParameterType.RequestBody);
+        return await client.ExecuteAsync(request);
+      }
+      catch (Exception ex) {
+        throw new Exception($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
+      }
     }
 
     #endregion

@@ -30,6 +30,10 @@ namespace SellAI.Models.AI.Objects
     [BsonElement("value")]
     public string? Value { get; set; }
 
+    [JsonProperty("display")]
+    [BsonElement("display")]
+    public string? Display { get; set; }
+
     [JsonProperty("confidence")]
     [BsonElement("confidence")]
     public decimal Confidence { get; set; }
@@ -82,8 +86,8 @@ namespace SellAI.Models.AI.Objects
     [BsonElement("values")]
     public List<ValuesDate>? Values { get; set; }
 
-    [JsonProperty("entities")]
-    [BsonElement("entities")]
+    [JsonProperty("entity")]
+    [BsonElement("entity")]
     public IDictionary<string, object>? Entity { get; set; }
 
   }

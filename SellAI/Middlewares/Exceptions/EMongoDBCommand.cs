@@ -1,11 +1,11 @@
 ﻿using System;
 namespace SellAI.Middlewares.Exceptions;
 
-public class EMongoDBQuery : Exception {
-  public EMongoDBQuery() { }
+public class EMongoDBCommand : Exception {
+  public EMongoDBCommand() { }
 
-  public EMongoDBQuery(string message) : base(message) { }
+  public EMongoDBCommand(string message) : base(message) { }
 
-  public EMongoDBQuery(string message, Exception innerException) : base(message, innerException) { }
+  public EMongoDBCommand(string message, Exception innerException) : base(message, innerException) { }
 }
 

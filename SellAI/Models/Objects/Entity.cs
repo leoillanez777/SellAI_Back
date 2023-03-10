@@ -28,6 +28,10 @@ namespace SellAI.Models.Objects {
     [JsonProperty("value")]
     public string? Value { get; set; }
 
+    [BsonElement("search")]
+    [JsonProperty("search")]
+    public string? Search { get; set; }
+
     [BsonElement("message")]
     [JsonProperty("message")]
     public string? Message { get; set; }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SellAI.Interfaces;
+using SellAI.Middlewares.Exceptions;
 using SellAI.Models;
 using SellAI.Models.AI;
 using SellAI.Models.DTOs;
@@ -25,11 +26,11 @@ namespace SellAI.Services
     public async Task<Sys_Menu> GetIntentAsync(string intentName, RoleAppDTO roleApp)
     {
       try {
-        var sys_menu = await _db.FindAsync(f => f.Nombre == intentName && f.App == roleApp.App).Result.FirstOrDefaultAsync();
+        var sys_menu = await _db.FindAsync(f => f.Nombre == intentName && (f.App == roleApp.App || f.App == "")).Result.FirstOrDefaultAsync();
         return sys_menu;
       }
-      catch (Exception ex) {
-        throw new Exception(ex.Message);
+      catch (MongoQueryException ex) {
+        throw new EMongoDBQuery("Error al consultar base de datos.", ex);
       }
     }
 
