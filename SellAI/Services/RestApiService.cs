@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Text;
 using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Crmf;
@@ -15,10 +16,10 @@ using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace SellAI.Services
 {
-  public class RestApiService : IRestApi
-  {
+  public class RestApiService : IRestApi {
     private readonly string _secureKey;
     private readonly string _urlMsg;
+    private readonly string _urlSpeech;
     private readonly string _urlEntity;
     private readonly string _version = DateTime.UtcNow.ToString("yyyyMMdd");
 
@@ -27,9 +28,10 @@ namespace SellAI.Services
       var wit = configuration.GetSection("Wit.ai");
       _secureKey = wit.GetValue<string>("Security")!;
       _urlMsg = wit.GetValue<string>("UrlMessage")!;
+      _urlSpeech = wit.GetValue<string>("UrlSpeech")!;
       _urlEntity = wit.GetValue<string>("UrlEntity")!;
     }
-    
+
     /// <summary>
     /// Get intent and entities from message
     /// </summary>
@@ -38,17 +40,17 @@ namespace SellAI.Services
     public async Task<Message> MessageAsync(string message)
     {
       Message msg = new();
+      RestResponse response = null!;
       try {
         var options = new RestClientOptions($"{_urlMsg}?v={_version}&q={message}") {
           ThrowOnAnyError = true,
-          MaxTimeout = 10000
+          MaxTimeout = 10000,
+          Authenticator = new JwtAuthenticator(_secureKey)
         };
-        var client = new RestClient(options) {
-         Authenticator = new JwtAuthenticator(_secureKey)
-        };
+        var client = new RestClient(options);
         var request = new RestRequest();
         //request.AddHeader("Authorization", _secureKey);
-        var response = await client.GetAsync(request);
+        response = await client.GetAsync(request);
 
         if (response != null && response.Content != null) {
           if (response.StatusCode == HttpStatusCode.OK) {
@@ -63,8 +65,52 @@ namespace SellAI.Services
       catch (JsonException ex) {
         throw new Exception($"Se produjo un error al deserializar la respuesta de la API de mensajes: {ex.Message}. Detalles: {ex.StackTrace}");
       }
-      catch (Exception ex) {
+      catch (WebException ex) {
+        // ATTENTION: see var response...now!
         throw new Exception($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
+      }
+
+      return msg;
+    }
+
+    public async Task<Message> SpeechAsync(byte[] audio)
+    {
+      Message msg = new();
+      RestResponse response = null!;
+      try {
+        var options = new RestClientOptions($"{_urlSpeech}?v={_version}&n=1") {
+          ThrowOnAnyError = true,
+          MaxTimeout = 10000,
+          Authenticator = new JwtAuthenticator(_secureKey)
+        };
+        var client = new RestClient(options);
+        var request = new RestRequest { Method = RestSharp.Method.Post };
+        request.AddHeader("Content-Type", "audio/mpeg");
+        request.AddParameter("audio/mpeg", audio, ParameterType.RequestBody);
+
+        response = await client.ExecuteAsync(request);
+
+        if (response != null && response.Content != null) {
+          if (response.StatusCode == HttpStatusCode.OK) {
+            // Adding commas to the response because I received without them.
+            string json = "[" + AddCommas(response.Content) + "]";
+            var msgAudio = JsonConvert.DeserializeObject<List<Message>>(json)!;
+            var finalMsgAudio = msgAudio.FirstOrDefault(m => m.EsFinal.HasValue && m.EsFinal.Value);
+            if (finalMsgAudio != null && finalMsgAudio is Message) {
+              msg = finalMsgAudio as Message;
+            }
+          }
+          else {
+            var errorMessage = response.ErrorException != null ? response.ErrorException.Message : response.ErrorMessage;
+            throw new Exception($"Se produjo un error al llamar a la API de audio. Código de estado HTTP: {(int)response.StatusCode}. Detalles: {errorMessage}");
+          }
+        }
+      }
+      catch (JsonException ex) {
+        throw new Exception($"Se produjo un error al deserializar la respuesta de la API de audio: {ex.Message}. Detalles: {ex.StackTrace}");
+      }
+      catch (WebException ex) {
+        throw new WebException($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
       }
 
       return msg;
@@ -165,11 +211,10 @@ namespace SellAI.Services
       try {
         var options = new RestClientOptions(url) {
           ThrowOnAnyError = true,
-          MaxTimeout = 10000
-        };
-        var client = new RestClient(options) {
+          MaxTimeout = 10000,
           Authenticator = new JwtAuthenticator(_secureKey)
         };
+        var client = new RestClient(options);
         var request = new RestRequest();
         request.Method = body == "" ? RestSharp.Method.Delete : RestSharp.Method.Post;
         request.AddHeader("Content-Type", "application/json");
@@ -180,6 +225,11 @@ namespace SellAI.Services
       catch (Exception ex) {
         throw new Exception($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
       }
+    }
+
+    private string AddCommas(string input)
+    {
+      return input.Replace("\r\n{", ",{");
     }
 
     #endregion

@@ -43,7 +43,6 @@ public class AnalyzeContextService : IAnalyzeContext {
     List<Entity> listEntity = ConvertToEntity(response);
 
     MessageDTO messageDTO = new();
-    messageDTO.messages = new();
 
     // UNDONE: use previousIntentID for comparar response.
     // loop from intents
@@ -101,18 +100,42 @@ public class AnalyzeContextService : IAnalyzeContext {
             break;
           case "read":
             List<ReadDataDTO> readDataDTOs = await _data.ReadAsync(responseAnalyze.ReadDatas!, sys_menu.Collection, roleApp.App);
-            Console.WriteLine(readDataDTOs);
-
+            string typeStructured = sys_menu.Tipo ?? "default";
             foreach (ReadDataDTO dataDTO in readDataDTOs) {
-              StringBuilder sbMessage = new StringBuilder(sys_menu.Display);
+              StringBuilder sbMessage = new StringBuilder();
+              Dictionary<string, string> row = new();
               foreach (KeyValuePair<string, List<EntitiesDTO>> kvpEntity in dataDTO.Entidades) {
                 kvpEntity.Value.ForEach(k => {
-                  sbMessage.Append($"\n{k.Display??k.Role}:  {k.Body}");
+                  switch (typeStructured) {
+                    case "table":
+                      // Search if exists column but I create it.
+                      var findColumn = messageDTO.table.columns.Find(c => c.field == k.Role);
+                      if (findColumn == null) {
+                        messageDTO.table.columns.Add(new Models.DTOs.Object.ColumnDto {
+                          field = k.Role,
+                          header = k.Display ?? k.Role
+                        });
+                      }
+
+                      if (row.ContainsKey(k.Role)) {
+                        row[k.Role] = k.Body;
+                      }
+                      else {
+                        row.Add(k.Role, k.Body);
+                      }
+                      
+                      break;
+                    default:
+                      sbMessage.Append($"\n{k.Display ?? k.Role}:  {k.Body}");
+                      break;
+                  }
                 });
               }
-              messageDTO.messages.Add(sbMessage.ToString());
+              messageDTO.table.rows.Add(row);
+              if (sbMessage.Length > 0)
+                messageDTO.messages.Add(sbMessage.ToString());
             }
-
+            messageDTO.messages.Add(sys_menu.Display);
             break;
         }
 

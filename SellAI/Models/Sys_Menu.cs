@@ -53,6 +53,10 @@ namespace SellAI.Models
     [JsonProperty("message")]
     public string? Mensaje { get; set; }
 
+    [BsonElement("type")]
+    [JsonProperty("type")]
+    public string? Tipo { get; set; }
+
     [BsonExtraElements]
     public IDictionary<string, object>? Bucket { get; set; }
   }

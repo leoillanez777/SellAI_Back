@@ -34,9 +34,9 @@ namespace SellAI.Controllers
       if (rolesApp != null) {
         // Call Service
         jsonResponse = await _db.SendMessageAsync(message, rolesApp);
-        return StatusCode(StatusCodes.Status200OK, new { resp = jsonResponse });
+        return Ok(new { resp = jsonResponse });
       }
-      return StatusCode(StatusCodes.Status401Unauthorized);
+      return Unauthorized();
     }
 
     [HttpGet("{message}/{token}")]
@@ -47,9 +47,29 @@ namespace SellAI.Controllers
       if (rolesApp != null) {
         // Call Service
         jsonResponse = await _db.SendResponseAsync(message, token, rolesApp);
-        return StatusCode(StatusCodes.Status200OK, new { resp = jsonResponse });
+        return Ok(new { resp = jsonResponse });
       }
-      return StatusCode(StatusCodes.Status401Unauthorized);
+      return Unauthorized();
+    }
+
+    [HttpPost("audio")]
+    public async Task<IActionResult> Speech([FromForm] IFormFile file)
+    {
+      if (file == null || file.Length == 0) {
+        return BadRequest("Audio file not provided");
+      }
+      string jsonResponse = "";
+      RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+      if (rolesApp != null) {
+        byte[] bytes;
+        using (var memoryStream = new MemoryStream()) {
+          file.CopyTo(memoryStream);
+          bytes = memoryStream.ToArray();
+        }
+        jsonResponse = await _db.SpeechAsync(bytes, rolesApp);
+        return Ok(new { resp = jsonResponse });
+      }
+      return Unauthorized();
     }
   }
 }

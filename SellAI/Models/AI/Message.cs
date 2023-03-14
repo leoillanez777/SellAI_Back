@@ -14,6 +14,9 @@ namespace SellAI.Models.AI
 
     [JsonProperty("entities")]
     public IDictionary<string, List<Entities>>? Entities { get; set; }
+
+    [JsonProperty("is_final")]
+    public bool? EsFinal { get; set; }
   }
 }
 

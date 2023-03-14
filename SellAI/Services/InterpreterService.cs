@@ -38,24 +38,7 @@ namespace SellAI.Services
     {
       // Send message and return intents.
       Message response = await _restApi.MessageAsync(message);
-
-      MessageDTO messagesDTO = new();
-      messagesDTO.messages = new();
-
-      if (response != null) {
-        // get it is a greeting.
-        Sys_Menu greeting = null!;
-        if (response.Intents.Count > 0)
-          greeting = await _sysMenu.GetGreetingAsync(response.Intents[0].Name);
-
-        if (greeting is not null) {
-          messagesDTO.messages.Add(greeting.Mensaje!);
-        }
-        else {
-          messagesDTO = await _analyze.GetMessagesAsync(response!, roleApp);
-        }
-      }
-      return JsonConvert.SerializeObject(messagesDTO);
+      return await AnalyzeTextWithoutContextAsync(response, roleApp);
     }
 
     public async Task<string> SendResponseAsync(string message, string token, RoleAppDTO roleApp)
@@ -66,6 +49,7 @@ namespace SellAI.Services
       if (context != null) {
         contextID = context.Id!;
         // Get previous intent id.
+
         intentID = context.Intents.Intents[0].Id;
         // concatenate intent
         newMessage += context.Display + " ";
@@ -88,6 +72,39 @@ namespace SellAI.Services
 
       return JsonConvert.SerializeObject(messagesDTO);
     }
+
+    public async Task<string> SpeechAsync(byte[] audio, RoleAppDTO roleApp)
+    {
+      Message response = await _restApi.SpeechAsync(audio);
+      return await AnalyzeTextWithoutContextAsync(response, roleApp);
+    }
+
+    /// <summary>
+    /// Analyze response of wit.ai and convert to json.
+    /// </summary>
+    /// <param name="response">response of wit</param>
+    /// <param name="roleApp">claims</param>
+    /// <returns>json in format messageDTO</returns>
+    private async Task<string> AnalyzeTextWithoutContextAsync(Message response, RoleAppDTO roleApp)
+    {
+      MessageDTO messagesDTO = new();
+      messagesDTO.messages = new();
+
+      if (response != null) {
+        // get it is a greeting.
+        Sys_Menu greeting = null!;
+        if (response.Intents != null && response.Intents.Count > 0)
+          greeting = await _sysMenu.GetGreetingAsync(response.Intents[0].Name);
+
+        if (greeting is not null) {
+          messagesDTO.messages.Add(greeting.Mensaje!);
+        }
+        else {
+          messagesDTO = await _analyze.GetMessagesAsync(response!, roleApp);
+        }
+      }
+      return JsonConvert.SerializeObject(messagesDTO);
+    } 
   }
 }
 

@@ -10,6 +10,14 @@ namespace SellAI.Interfaces {
     /// <param name="message">text to send</param>
     /// <returns>Model Message</returns>
     Task<Message> MessageAsync(string message);
+
+    /// <summary>
+    /// Get intent and entities from audio
+    /// </summary>
+    /// <param name="audio">audio of 20 seconds maximum</param>
+    /// <returns>Model Message</returns>
+    Task<Message> SpeechAsync(byte[] audio);
+
     /// <summary>
     /// Create a new synonym for a keywords entity
     /// </summary>

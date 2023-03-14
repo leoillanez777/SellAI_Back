@@ -28,10 +28,10 @@ namespace SellAI.Controllers {
       RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
       if (rolesApp != null) {
         var data = await _db.GetListAsync(rolesApp, isActive);
-        return StatusCode(StatusCodes.Status200OK, data);
+        return Ok(data);
       }
 
-      return StatusCode(StatusCodes.Status401Unauthorized);
+      return Unauthorized();
     }
 
     [HttpPost]
@@ -41,11 +41,11 @@ namespace SellAI.Controllers {
       if (rolesApp != null) {
         var data = await _db.PostAsync(brand, rolesApp);
         if (data == "error")
-          return StatusCode(StatusCodes.Status500InternalServerError, data);
-        return StatusCode(StatusCodes.Status201Created, data);
+          return BadRequest("La solicitud no se pudo procesar correctamente.");
+        return Created("Brand", data);
       }
 
-      return StatusCode(StatusCodes.Status401Unauthorized);
+      return Unauthorized();
     }
 
     [HttpPut]
@@ -55,11 +55,11 @@ namespace SellAI.Controllers {
       if (rolesApp != null) {
         var data = await _db.UpdateAsync(brand, rolesApp);
         if (data == "error")
-          return StatusCode(StatusCodes.Status500InternalServerError, data);
-        return StatusCode(StatusCodes.Status202Accepted, data);
+          return BadRequest("La solicitud no se pudo procesar correctamente.");
+        return Ok(data);
       }
 
-      return StatusCode(StatusCodes.Status401Unauthorized);
+      return Unauthorized();
     }
 
     //TODO: add delete request.

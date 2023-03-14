@@ -24,6 +24,14 @@ namespace SellAI.Interfaces
     /// <param name="roleApp">claims</param>
     /// <returns>response of wit.ai</returns>
     Task<string> SendResponseAsync(string message, string token, RoleAppDTO roleApp);
+
+    /// <summary>
+    /// Use for audios without context.
+    /// </summary>
+    /// <param name="audio">20 seconds maximum</param>
+    /// <param name="roleApp">claims</param>
+    /// <returns>response of wit.ai</returns>
+    Task<string> SpeechAsync(byte[] audio, RoleAppDTO roleApp);
   }
 }
 

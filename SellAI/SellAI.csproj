@@ -20,7 +20,7 @@
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.2.2" />
     <PackageReference Include="MongoDB.Driver" Version="2.19.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.4" />
-    <PackageReference Include="RestSharp" Version="108.0.3" />
+    <PackageReference Include="RestSharp" Version="109.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +45,7 @@
     <None Remove="Models\AI\Objects\" />
     <None Remove="Models\Data\" />
     <None Remove="Middlewares\Exceptions\" />
+    <None Remove="Models\DTOs\Object\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Mapping\" />
@@ -52,5 +53,6 @@
     <Folder Include="Models\Objects\" />
     <Folder Include="Models\Data\" />
     <Folder Include="Middlewares\Exceptions\" />
+    <Folder Include="Models\DTOs\Object\" />
   </ItemGroup>
 </Project>
