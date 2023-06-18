@@ -23,19 +23,19 @@ public class AnalyzeActionService : IAnalyzeAction {
 
         // Find the ones that don't match
         var exceptEntities = sys_menu.Entities!
-          .Select(e => e.RolID).Except(listEntity.Select(l => l.RolID)).ToList();
+          .Select(e => e.RoleId).Except(listEntity.Select(l => l.RoleId)).ToList();
 
         if (exceptEntities.Count > 0) {
           // Missing entities to complete
           var missEntity = sys_menu.Entities!
-                .Where(e => exceptEntities.Any(a => a == e.RolID)).ToList();
+                .Where(e => exceptEntities.Any(a => a == e.RoleId)).ToList();
 
           missEntity.ForEach(m => {
             if (m.Required.HasValue) {
               if (response.AllFieldsComplete) {
                 response.Messages.Add("Por favor ingresar los siguientes datos: \n");
               }
-              if (m.RolID == null) {
+              if (m.RoleId == null) {
                 // Revisar por los roles...
               }
               else
@@ -53,20 +53,20 @@ public class AnalyzeActionService : IAnalyzeAction {
         // UNDONE: how detect if conditions is "or" or "and"?
 
         // Get entities to use.
-        var entityIds = listEntity.Select(entSel => entSel.RolID).ToList();
+        var entityIds = listEntity.Select(entSel => entSel.RoleId).ToList();
 
         if (entityIds.Count > 0) {
           response.ReadDatas = new();
           response.ReadDatas.AddRange(entityIds.Select(id => {
-            var sysEntity = sys_menu.Entities?.FirstOrDefault(e => e.RolID == id);
-            var witEntity = listEntity.FirstOrDefault(l => l.RolID == id);
+            var sysEntity = sys_menu.Entities?.FirstOrDefault(e => e.RoleId == id);
+            var witEntity = listEntity.FirstOrDefault(l => l.RoleId == id);
             SearchJson searchJson = new() { aggrega = "$match" };
             if (sysEntity != null && !string.IsNullOrEmpty(sysEntity.Search)) {
               searchJson = JsonConvert.DeserializeObject<SearchJson>(sysEntity.Search)!;
             }
             ReadData readData = new() {
               Command = searchJson.aggrega,
-              FullPath = $"entities.{witEntity!.Name}:{witEntity!.Rol}.body",
+              FullPath = $"entities.{witEntity!.Name}:{witEntity!.Role}.body",
               ExtraCmd = searchJson.extra ?? null,
               CondExtra = searchJson.cond ?? null,
               Value = witEntity.Value!

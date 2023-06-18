@@ -19,6 +19,20 @@ namespace SellAI.Interfaces {
     Task<Message> SpeechAsync(byte[] audio);
 
     /// <summary>
+    /// Get all intents
+    /// </summary>
+    /// <param name="intent">name intent (not required)</param>
+    /// <returns>Array object with id and name</returns>
+    Task<string> CallGetIntetAsync(string? intent = null);
+
+    /// <summary>
+    /// Get all entities
+    /// </summary>
+    /// <param name="entity">name of entity (not required)</param>
+    /// <returns>array of object with id and name of all entities</returns>
+    Task<string> CallGetEntityAsync(string? entity = null);
+
+    /// <summary>
     /// Create a new synonym for a keywords entity
     /// </summary>
     /// <param name="body">{"synonym":"Camembert city"}</param>

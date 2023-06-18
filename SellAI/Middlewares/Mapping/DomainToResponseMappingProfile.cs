@@ -11,6 +11,7 @@ namespace SellAI.Middlewares.Mapping
     public DomainToResponseMappingProfile()
     {
       CreateMap<Entity, Entities>()
+        .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.RoleId))
         .ReverseMap();
       CreateMap<Category, CategoryDTO>()
         .ReverseMap();

@@ -1,11 +1,11 @@
 ﻿using System;
 namespace SellAI.Interfaces;
 
-public interface IEntity {
+public interface IIntent {
 
   /// <summary>
-  /// Get all entities 
+  /// Get all intents 
   /// </summary>
   /// <returns>json string</returns>
-  Task<string> GetAllEntities(string? entity = null);
+  Task<string> GetAllIntent(string? intent = null);
 }

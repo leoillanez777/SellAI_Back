@@ -55,7 +55,7 @@ namespace SellAI.Models
 
     [BsonElement("type")]
     [JsonProperty("type")]
-    public string? Tipo { get; set; }
+    public string Tipo { get; set; } = null!;
 
     [BsonExtraElements]
     public IDictionary<string, object>? Bucket { get; set; }

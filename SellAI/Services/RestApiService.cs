@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Net;
-using System.Text;
-using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Asn1.Crmf;
 using RestSharp;
 using RestSharp.Authenticators;
-using RestSharp.Authenticators.OAuth2;
 using SellAI.Interfaces;
 using SellAI.Models.AI;
-using SellAI.Models.AI.Objects;
 using SellAI.Models.Data;
-using SellAI.Models.Objects;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace SellAI.Services
 {
@@ -21,6 +14,7 @@ namespace SellAI.Services
     private readonly string _urlMsg;
     private readonly string _urlSpeech;
     private readonly string _urlEntity;
+    private readonly string _urlIntent;
     private readonly string _version = DateTime.UtcNow.ToString("yyyyMMdd");
 
     public RestApiService(IConfiguration configuration)
@@ -30,6 +24,7 @@ namespace SellAI.Services
       _urlMsg = wit.GetValue<string>("UrlMessage")!;
       _urlSpeech = wit.GetValue<string>("UrlSpeech")!;
       _urlEntity = wit.GetValue<string>("UrlEntity")!;
+      _urlIntent = wit.GetValue<string>("UrlIntent")!;
     }
 
     /// <summary>
@@ -67,7 +62,7 @@ namespace SellAI.Services
       }
       catch (WebException ex) {
         // ATTENTION: see var response...now!
-        throw new Exception($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
+        throw new WebException($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
       }
 
       return msg;
@@ -99,6 +94,9 @@ namespace SellAI.Services
             if (finalMsgAudio != null && finalMsgAudio is Message) {
               msg = finalMsgAudio as Message;
             }
+            else {
+              throw new Exception("El audio no es entendible o no se reconoce lo que se intenta comunicar.");
+            }
           }
           else {
             var errorMessage = response.ErrorException != null ? response.ErrorException.Message : response.ErrorMessage;
@@ -109,8 +107,11 @@ namespace SellAI.Services
       catch (JsonException ex) {
         throw new Exception($"Se produjo un error al deserializar la respuesta de la API de audio: {ex.Message}. Detalles: {ex.StackTrace}");
       }
-      catch (WebException ex) {
-        throw new WebException($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
+      catch (HttpRequestException ex) {
+        throw new HttpRequestException($"Se produjo un error inesperado: {ex.Message}. Detalles: {ex.StackTrace}");
+      }
+      catch (Exception ex) {
+        throw new Exception($"Se produjo un error en la API de audio: {ex.Message}");
       }
 
       return msg;
@@ -174,7 +175,49 @@ namespace SellAI.Services
 
     #endregion
 
+    #region Call Get Intents
+    public async Task<string> CallGetIntetAsync(string? intent = null)
+    {
+      string url = $"{_urlIntent}{(intent is not null ? $"/{intent}" : "")}?v={_version}";
+      return await GetAsync(url);
+    }
+    #endregion
+
+    #region Call Get Entities
+    public async Task<string> CallGetEntityAsync(string? entity = null)
+    {
+      string url = $"{_urlEntity}{(entity is not null ? $"/{entity}" : "")}?v={_version}";
+      return await GetAsync(url);
+    }
+    #endregion
+
     #region Private Functions
+
+    private async Task<string> GetAsync(string url)
+    {
+      var msg = "error";
+      RestResponse response;
+      try {
+        var options = new RestClientOptions(url) {
+          ThrowOnAnyError = true,
+          MaxTimeout = 10000,
+          Authenticator = new JwtAuthenticator(_secureKey)
+        };
+
+        var client = new RestClient(options);
+        var request = new RestRequest();
+        request.Method = RestSharp.Method.Get;
+        request.AddHeader("Content-Type", "application/json");
+        response = await client.ExecuteAsync(request);
+        if (response != null && response.Content != null && response.IsSuccessful) {
+          msg = response.Content;
+        }
+      }
+      catch (Exception ex) {
+        throw new Exception($"Se produjo un error inesperado en get Method: {ex.Message}. Detalles: {ex.StackTrace}");
+      }
+      return msg;
+    }
 
     private async Task<string> PostOrDeleteAsync(string url, string body = "")
     {

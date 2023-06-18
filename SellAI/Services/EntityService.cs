@@ -3,18 +3,18 @@ using SellAI.Interfaces;
 
 namespace SellAI.Services;
 
-public class IntentService : IIntent {
+public class EntityService : IEntity {
 
   private readonly IRestApi _restApi;
 
-  public IntentService(IRestApi restApi)
+  public EntityService(IRestApi restApi)
   {
     _restApi = restApi;
   }
 
-  public async Task<string> GetAllIntent()
+  public async Task<string> GetAllEntities(string? entity = null)
   {
-    return await _restApi.CallGetIntetAsync();
+    return await _restApi.CallGetEntityAsync(entity);
   }
 }
 

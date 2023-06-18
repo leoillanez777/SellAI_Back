@@ -34,6 +34,32 @@ namespace SellAI.Services
       }
     }
 
+    public async Task<Sys_Menu?> GetAsync(string intentId, RoleAppDTO roleApp)
+    {
+      try {
+        var sys_menu = await _db.FindAsync(f => f.IntentID == intentId && (f.App == roleApp.App || f.App == "")).Result.FirstOrDefaultAsync();
+        return sys_menu;
+      }
+      catch (EMongoDBQuery ex) {
+        throw new EMongoDBQuery("Error al recuperar datos: ", ex);
+      }
+    }
+
+    public async Task<string> PostAsync(Sys_Menu sysMenuDTO, RoleAppDTO claims)
+    {
+      return "";
+    }
+
+    public async Task<string> UpdateAsync(Sys_Menu sysMenuDTO, RoleAppDTO claims)
+    {
+      return "";
+    }
+
+    public async Task<string> DeleteAsync(string id, RoleAppDTO claims)
+    {
+      return "";
+    }
+
     public async Task<string> GetOutOfScopeAsync()
     {
       string response = "";

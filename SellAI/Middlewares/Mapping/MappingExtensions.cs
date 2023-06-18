@@ -2,7 +2,7 @@
 using AutoMapper;
 using System.Reflection;
 
-namespace SellAI.Mapping
+namespace SellAI.Middlewares.Mapping
 {
   public static class MappingExtensions
   {

@@ -15,6 +15,15 @@ namespace SellAI.Interfaces
     /// <returns>data of mongoDB or null</returns>
     Task<Sys_Menu> GetIntentAsync(string intentName, RoleAppDTO roleApp);
 
+
+    /// <summary>
+    /// Get intent of sys_menu on MongoDB by intentID
+    /// </summary>
+    /// <param name="intentId">Id to search</param>
+    /// <param name="roleApp">class with claims of security</param>
+    /// <returns>data of mongo or null data.</returns>
+    Task<Sys_Menu?> GetAsync(string intentId, RoleAppDTO roleApp);
+
     /// <summary>
     /// Get of mongoDB if it is greeting.
     /// </summary>
