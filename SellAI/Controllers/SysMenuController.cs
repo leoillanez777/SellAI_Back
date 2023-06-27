@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using SellAI.Interfaces;
+using SellAI.Models;
 using SellAI.Models.DTOs;
 using SellAI.Models.Objects;
 
@@ -38,6 +39,18 @@ public class SysMenuController: ControllerBase {
     if (rolesApp != null) {
       var data = await _sysmenu.GetAsync(id, rolesApp);
       return Ok(data);
+    }
+
+    return Unauthorized();
+  }
+
+  [HttpPost]
+  public async Task<IActionResult> PostAsync(Sys_MenuDTO sys_MenuDTO)
+  {
+    RoleAppDTO rolesApp = _claim.GetRoleAndApp(HttpContext.User.Identity!);
+    if (rolesApp != null) {
+      var data = await _sysmenu.PostAsync(sys_MenuDTO, rolesApp);
+      return Created("Menu", data);
     }
 
     return Unauthorized();

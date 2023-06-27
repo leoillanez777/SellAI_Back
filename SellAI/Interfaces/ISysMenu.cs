@@ -31,6 +31,9 @@ namespace SellAI.Interfaces
     /// <returns>return data of sys_menu of greeting or null.</returns>
     Task<Sys_Menu> GetGreetingAsync(string nameIntent);
 
+
+    Task<string> PostAsync(Sys_MenuDTO sysMenuDTO, RoleAppDTO claims);
+
     /// <summary>
     /// Get message of mongoDB for out of scope.
     /// </summary>

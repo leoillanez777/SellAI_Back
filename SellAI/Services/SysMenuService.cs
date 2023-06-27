@@ -1,6 +1,8 @@
 ﻿using System;
+using AutoMapper;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 using SellAI.Interfaces;
 using SellAI.Middlewares.Exceptions;
 using SellAI.Models;
@@ -13,14 +15,17 @@ namespace SellAI.Services
   {
     private readonly IMongoClient _client;
     private readonly IMongoCollection<Sys_Menu> _db;
+    private readonly IMapper _mapper;
 
     public SysMenuService(
       IMongoClient client,
-      IOptions<ContextMongoDB> options
+      IOptions<ContextMongoDB> options,
+      IMapper map
     )
     {
       _client = client;
       _db = _client.GetDatabase(options.Value.DatabaseName).GetCollection<Sys_Menu>(options.Value.SysMenuCollectionName);
+      _mapper = map;
     }
 
     public async Task<Sys_Menu> GetIntentAsync(string intentName, RoleAppDTO roleApp)
@@ -45,9 +50,21 @@ namespace SellAI.Services
       }
     }
 
-    public async Task<string> PostAsync(Sys_Menu sysMenuDTO, RoleAppDTO claims)
+    public async Task<string> PostAsync(Sys_MenuDTO sysMenuDTO, RoleAppDTO claims)
     {
-      return "";
+      try {
+        Sys_Menu sys_Menu = new();
+        sys_Menu = _mapper.Map<Sys_Menu>(sysMenuDTO);
+        sys_Menu.App = claims.App;
+        await _db.InsertOneAsync(sys_Menu);
+        return JsonConvert.SerializeObject(sys_Menu);
+      }
+      catch (EMongoDBCommand ex) {
+        throw new EMongoDBCommand($"Error al grabar Intent: {ex.Message}", ex);
+      }
+      catch (Exception ex) {
+        throw new Exception($"Error no controlado en grabar Intent: {ex.Message}", ex);
+      }
     }
 
     public async Task<string> UpdateAsync(Sys_Menu sysMenuDTO, RoleAppDTO claims)

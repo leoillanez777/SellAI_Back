@@ -9,7 +9,7 @@ namespace SellAI.Models
   public class Sys_Menu
   {
     [BsonId]
-    [BsonRepresentation (BsonType.ObjectId)]
+    [BsonRepresentation(BsonType.ObjectId)]
     [JsonProperty("id")]
     public string? Id { get; set; }
 

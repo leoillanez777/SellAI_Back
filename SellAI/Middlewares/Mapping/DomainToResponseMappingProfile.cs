@@ -17,6 +17,8 @@ namespace SellAI.Middlewares.Mapping
         .ReverseMap();
       CreateMap<Brand, BrandDTO>()
         .ReverseMap();
+      CreateMap<Sys_Menu, Sys_MenuDTO>()
+        .ReverseMap();
     }
   }
 }
